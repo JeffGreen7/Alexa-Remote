@@ -1,0 +1,39 @@
+ alexad
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start and stop alexa
+# Description: alexa
+### END INIT INFO
+
+export PATH=$PATH:/usr/local/debian-chroot/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/local/sbin:/usr/local/bin:/new/path/variable:/usr/local/n/versions/node/5.6.0/bin/
+export NODE_PATH=$NODE_PATH:/usr/local/lib/node_modules
+
+
+case "$1" in
+  start)
+        echo "starting alexa"
+  forever start --sourceDir=/usr/local/Echo/ server.js
+  ;;
+stop)
+  echo "stopping alexa"
+  forever stop /usr/local/Echo/server.js
+  ;;
+status)
+        SERVICE='server.js'
+
+        if ps ax | grep -v grep | grep $SERVICE > /dev/null
+        then
+                echo "$SERVICE service running, everything is fine"
+                exit 0
+        else
+                echo "$SERVICE is not running"
+                exit 1
+        fi
+        ;;
+*)
+  echo "Usage: /etc/init.d/alexa {start|stop|status}"
+  exit 1
