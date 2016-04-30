@@ -5,20 +5,30 @@ var alexa = require('alexa-app'),
     conf = require('./remote_conf.js'),
     hub_ip = conf.hub_ip,
     app_id = conf.app_id,
-    DirecTV = conf.DirecTV,
-    TV = conf.TV,
-    Reciever = conf.Reciever,
-    Telv = conf.Telv,
-    Roku = conf.Roku,
-    Music = conf.Music,
-    Fire = conf.Fire,
-    Movie = conf.Movie,
-    PowerOff = conf.PowerOff;
+    devDirecTV = conf.devDirecTV,
+    devTV = conf.devTV,
+    devRoku = conf.devRoku,
+    devFire = conf.devFire,
+    devDVD = conf.devDVD,
+    devReciever = conf.devReciever,
+    actTV = conf.actTV,
+    actRoku = conf.actRoku,
+    actMusic = conf.actMusic,
+    Fire = conf.actFire,
+    Movie = conf.actMovie,
+    PowerOff = conf.actPowerOff,
+    hub_name = conf.hub_name;
     
-
 
 // Define an alexa-app
 var app = new alexa.app('remote');
+var DVR = "None";
+var RECIEVER = "None";
+var TV = "None";
+var DVD = "None";
+var ROKU = "None";
+var FIRE = "None";
+
 
 app.launch(function(req, res) {
     console.log("Launching the application");
@@ -76,6 +86,51 @@ app.pre = function(req, res, type) {
     }
 };
 
+app.intent('SELECTHUB',
+	   {
+	       "slots" : {'HUB' : 'LITERAL'},
+	       "utterances" : ["{set hub} {Family|Master|Garage|HUB}"]
+	   },
+	   function (req, res) {
+	       console.log('Selecting hub ');
+	       var hub = req.slot('HUB');
+	       res.say('Selecting hub ' + hub);
+	       console.log('Selecting hub ' + hub);
+		   if (hub.toLowerCase() === conf.hub_name1.toLowerCase())
+		   {
+    				hub_ip = conf.hub_ip1;
+    				hub_name = conf.hub_name1;
+            }
+            else if (hub.toLowerCase() === conf.hub_name2.toLowerCase())
+		   {
+    				hub_ip = conf.hub_ip2;
+    				hub_name = conf.hub_name2;
+            }
+            else if (hub.toLowerCase() === conf.hub_name3.toLowerCase())
+		   {
+    				hub_ip = conf.hub_ip3;
+    				hub_name = conf.hub_name3;
+            }
+            else
+            {
+    	    			hub_ip = conf.hub_ip1
+    	    			hub_name = conf.hub_name1;
+    	    			
+			}
+			
+			console.log('Selecting hub ip ' + hub_ip);
+			DVR = hub_name + " " + devDirecTV;
+	       	console.log('DVR name ' + DVR);
+	       	TV = hub_name + " " + devTV;
+	       	console.log('TV name ' + TV);
+	       	RECIEVER = hub_name + " " + devReciever;
+	       	console.log('Receiver name ' + RECIEVER);
+			ROKU = hub_name + " " + devRoku;
+	       	console.log('Roku name ' + ROKU);
+	       	DVD = hub_name + " " + devDVD;
+	       	console.log('DVD name ' + DVD);
+	 });
+
 app.intent('FFWDDVR',
 	   {
 	       "slots" : {'AMOUNT' : 'NUMBER'},
@@ -87,14 +142,12 @@ app.intent('FFWDDVR',
 		   amt = 1;
 	       }
 	       res.say('Fast forward DVR  by ' + amt);
-	       for (var i = 0; i < amt;i++)
-	       {
-		   console.log('FFWD DVR by ' + amt);
-		   execCmd(DirecTV, 'FastForward', 1, function (res) {
+	       console.log('FFWD DVR by ' + amt);
+		   execCmd(DVR, 'FastForward', amt, function (res) {
 		       console.log("Command FFWD  was executed with result : " + res);
 		   });
-	       }
 	   });
+	   
 app.intent('RWDDVR',
 	   {
 	       "slots" : {'AMOUNT' : 'NUMBER'},
@@ -106,14 +159,12 @@ app.intent('RWDDVR',
 		   amt = 1;
 	       }
 	       res.say('Rewind DVR by ' + amt);
-	       for (var i = 0; i < amt;i++)
-	       {
-		   console.log('RWD DVR by ' + amt);
-		   execCmd(DirecTV, 'Rewind', 1, function (res) {
+	       		   console.log('RWD DVR by ' + amt);
+		   execCmd(DVR, 'Rewind', amt, function (res) {
 		       console.log("Command RWD  was executed with result : " + res);
 		   });
-	       }
 	   });
+	   
 app.intent('PauseDVR',
 	   {
 	       "slots" : {},
@@ -122,7 +173,7 @@ app.intent('PauseDVR',
 	   function (req, res) {
 	       res.say('Pausing DVR!');
 	       console.log('Pausing DVR!');
-	       execCmd(DirecTV, 'Pause', 1, function (res) {
+	       execCmd(DVR, 'Pause', 1, function (res) {
 		   console.log("Command Pause executed with result : " + res);
 	       });
 	   });
@@ -134,10 +185,11 @@ app.intent('PlayDVR',
 	   function (req, res) {
 	       res.say('Playing DVR!');
 	       console.log('Playing DVR!');
-	       execCmd(DirecTV, 'Play', 1, function (res) {
+	       execCmd(DVR, 'Play', 1, function (res) {
 		   console.log("Command Play executed with result : " + res);
 	       });
 	   });
+	   
 app.intent('Channel',
 	   {
 	       "slots" : {'AMOUNT' : 'NUMBER'},
@@ -145,8 +197,8 @@ app.intent('Channel',
 	   },
 	   function (req, res) {
 	       var amt = parseInt(req.slot('AMOUNT'), 10);
-	       res.say('Setting DirecTV to ' + amt);
- 	       console.log('change channel DirecTV to ' + amt);
+	       res.say('Setting DVR to ' + amt);
+ 	       console.log('change channel DVR to ' + amt);
 	       var numpar = amt;
 	       var digits = [];
 	       while (numpar > 0) {
@@ -160,8 +212,8 @@ app.intent('Channel',
 	       while (number != undefined)
 	       {
 		   console.log('Number is ' + number);
-		   execCmd(DirecTV, number,1, function (res) {
-				   console.log("Change Channel DirecTV was executed with result : " + res);
+		   execCmd(DVR, number,1, function (res) {
+				   console.log("Change Channel DVR was executed with result : " + res);
 		   });
 		   number = digits.pop().toString();
 		   console.log('Next number is ' + number);
@@ -177,7 +229,7 @@ app.intent('Guide',
 	   function (req, res) {
 	       res.say('Showing TV Guide!');
 	       console.log('Guide!');
-	       execCmd(DirecTV, 'Guide', 1, function (res) {
+	       execCmd(DVR, 'Guide', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
@@ -190,20 +242,20 @@ app.intent('List',
 	   function (req, res) {
 	       res.say('Showing list!');
 	       console.log('List');
-	       execCmd(DirecTV, 'List', 1, function (res) {
+	       execCmd(DVR, 'List', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
 	
 app.intent('PageDown',
 	   {
-	       "slots" : {'AMOUNT' : 'NUMBER'},
-	       "utterances" : ["{down|page down} {by|} {1-9|AMOUNT}"]
+	       "slots" : {},
+	       "utterances" : ["{down|page down}"]
 	   },
 	   function (req, res) {
 	       res.say('Page down!');
 	       console.log('Page down');
-	       execCmd(DirecTV, 'PageDown', 1, function (res) {
+	       execCmd(DVR, 'PageDown', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 
@@ -217,7 +269,7 @@ app.intent('PageUp',
 	   function (req, res) {
 	   	   res.say('Page up!');
 	       console.log('Page up');
-	       execCmd(DirecTV, 'PageUp', 1, function (res) {
+	       execCmd(DVR, 'PageUp', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
@@ -233,14 +285,10 @@ app.intent('MoveUp',
 	       if (isNaN(amt)) {
 		   		amt = 1;
 	       }
-	       res.say('Moving up ' + amt);
-	       for (var i = 0; i < amt;i++)
-	       {
-		   		console.log('Move up by ' + amt);
-		   		execCmd(DirecTV, 'DirectionUp', 1, function (res) {
+	       		console.log('Move up by ' + amt);
+		   		execCmd(DVR, 'DirectionUp', amt, function (res) {
 		       	console.log("Command Move Up  was executed with result : " + res);
 		   });
-		  }
 		});
 
 app.intent('MoveDown',
@@ -254,14 +302,11 @@ app.intent('MoveDown',
 	       if (isNaN(amt)) {
 		   		amt = 1;
 	       }
-	       res.say('Moving down ' + amt);
-	       for (var i = 0; i < amt;i++)
-	       {
-		   		console.log('Move up by ' + amt);
-		   		execCmd(DirecTV, 'DirectionDown', 1, function (res) {
+	       		res.say('Moving down ' + amt);
+	       		console.log('Move up by ' + amt);
+		   		execCmd(DVR, 'DirectionDown', amt, function (res) {
 		       	console.log("Command Move Down  was executed with result : " + res);
 		   });
-		  } 
 	   });	      	      
 
 app.intent('MoveLeft',
@@ -272,7 +317,7 @@ app.intent('MoveLeft',
 	   function (req, res) {
 	       res.say('moving left!');
 	       console.log('move left');
-	       execCmd(DirecTV, 'DirectionLeft', 1, function (res) {
+	       execCmd(DVR, 'DirectionLeft', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });	      	      
@@ -285,7 +330,7 @@ app.intent('MoveRight',
 	   function (req, res) {
 	       res.say('moving right!');
 	       console.log('move right');
-	       execCmd(DirecTV, 'DirectionRight', 1, function (res) {
+	       execCmd(DVR, 'DirectionRight', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
@@ -298,7 +343,7 @@ app.intent('Select',
 	   function (req, res) {
 	       res.say('selecting!');
 	       console.log('selecting');
-	       execCmd(DirecTV, 'Select', 1, function (res) {
+	       execCmd(DVR, 'Select', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
@@ -311,7 +356,7 @@ app.intent('Menu',
 	   function (req, res) {
 	       res.say('Menu!');
 	       console.log('Menu');
-	       execCmd(DirecTV, 'Menu', 1, function (res) {
+	       execCmd(DVR, 'Menu', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
@@ -324,7 +369,7 @@ app.intent('Info',
 	   function (req, res) {
 	       res.say('Info!');
 	       console.log('Info');
-	       execCmd(DirecTV, 'Info', 1, function (res) {
+	       execCmd(DVR, 'Info', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
@@ -337,7 +382,7 @@ app.intent('Exit',
 	   function (req, res) {
 	       res.say('Exiting!');
 	       console.log('Exit');
-	       execCmd(DirecTV, 'Exit', 1, function (res) {
+	       execCmd(DVR, 'Exit', 1, function (res) {
 		   console.log("Command guide executed with result : " + res);
 	       });
 	   });
@@ -469,7 +514,7 @@ app.intent('TurnOffAmplifier',
 	   function (req, res) {
 	       res.say('Turning amplifer off!');
 	       console.log('Turning amplifier off!');
-	       execCmd(Reciever, 'PowerToggle', 1, function (res) {
+	       execCmd(RECIEVER, 'PowerToggle', 1, function (res) {
 		   console.log("Command for amplifer PowerToggle executed with result : " + res);
 	       });
 	   });
@@ -482,7 +527,7 @@ app.intent('TurnOnAmplifier',
 	   function (req, res) {
 	       res.say('Toggle power on the amplifier!');
 	       console.log('Turning amplifier on!');
-	       execCmd(Reciever, 'PowerToggle', 1, function (res) {
+	       execCmd(RECIEVER, 'PowerToggle', 1, function (res) {
 		   console.log("Command Amplifier PowerToggle executed with result : " + res);
 	       });
 	   });
@@ -495,7 +540,7 @@ app.intent('AmplifierInputNext',
 	   function (req, res) {
 	       res.say('selecting next input on amplifier!');
 	       console.log('Selecting next amplifier input!');
-	       execCmd(Reciever, 'InputNext', 1, function (res) {
+	       execCmd(RECIEVER, 'InputNext', 1, function (res) {
 		   console.log("Command Amplifier InputNext executed with result : " + res);
 	       });
 	   });
@@ -509,7 +554,7 @@ app.intent('TurnOff',
 	   function (req, res) {
 	       res.say('Turning off everything!');
 	       console.log('Turning off everythign!');
-	       execActivity(PowerOff, function (res) {
+	       execActivity(actPowerOff, function (res) {
 		   console.log("Command to PowerOff executed with result : " + res);
 	       });
 	   });
@@ -523,7 +568,7 @@ app.intent('Movie',
 	   function (req, res) {
 	       res.say('Turning on Movie Mode!');
 	       console.log('Turning on Movie Mode!');
-	       execActivity(Movie, function (res) {
+	       execActivity(actMovie, function (res) {
 		   console.log("Command to Watch a Movie executed with result : " + res);
 	       });
 	   });
@@ -537,11 +582,223 @@ app.intent('Fire',
 	   function (req, res) {
 	       res.say('Turning on Fire');
 	       console.log('Turning on Fire!');
-	       execActivity(fire, function (res) {
+	       execActivity(actfire, function (res) {
 		   console.log("Command to Watch Fire executed with result : " + res);
 	       });
 	   });
 
+
+app.intent('FireMoveRight',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire right}"]
+	   },
+	   function (req, res) {
+	       res.say('moving right!');
+	       console.log('move right');
+	       execCmd(FIRE, 'DirectionRight', 1, function (res) {
+		   console.log("Command fire right executed with result : " + res);
+	       });
+	   });
+
+app.intent('FireMoveLeft',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire left}"]
+	   },
+	   function (req, res) {
+	       res.say('moving left!');
+	       console.log('move left');
+	       execCmd(FIRE, 'DirectionLeft', 1, function (res) {
+		   console.log("Command fire left executed with result : " + res);
+	       });
+	   });
+
+app.intent('FireMoveUp',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire up}"]
+	   },
+	   function (req, res) {
+	       res.say('moving up!');
+	       console.log('move up');
+	       execCmd(FIRE, 'DirectionUp', 1, function (res) {
+		   console.log("Command fire up executed with result : " + res);
+	       });
+	   });
+	   
+app.intent('FireMoveDown',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire down}"]
+	   },
+	   function (req, res) {
+	       res.say('moving Down!');
+	       console.log('move Down');
+	       execCmd(FIRE, 'DirectionDown', 1, function (res) {
+		   console.log("Command fire Down executed with result : " + res);
+	       });
+	   });	 
+	   	   
+app.intent('FireOK',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire ok}"]
+	   },
+	   function (req, res) {
+	       res.say('ok!');
+	       console.log('move ok');
+	       execCmd(FIRE, 'OK', 1, function (res) {
+		   console.log("Command fire ok executed with result : " + res);
+	       });
+	   });	
+
+	   
+app.intent('FireStop',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire stop}"]
+	   },
+	   function (req, res) {
+	       res.say('stopping!');
+	       console.log('stop');
+	       execCmd(FIRE, 'Stop', 1, function (res) {
+		   console.log("Command fire stop executed with result : " + res);
+	       });
+	   });	
+
+app.intent('FirePlay',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire play}"]
+	   },
+	   function (req, res) {
+	       res.say('Playing!');
+	       console.log('Play');
+	       execCmd(FIRE, 'Play', 1, function (res) {
+		   console.log("Command fire Play executed with result : " + res);
+	       });
+	   });		   
+
+	   
+app.intent('FireRWD',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire rewind}"]
+	   },
+	   function (req, res) {
+	       res.say('rewinding!');
+	       console.log('rewind');
+	       execCmd(FIRE, 'Rewind', 1, function (res) {
+		   console.log("Command fire rwd executed with result : " + res);
+	       });
+	   });	
+
+app.intent('FirePause',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire pause}"]
+	   },
+	   function (req, res) {
+	       res.say('pausing!');
+	       console.log('pause');
+	       execCmd(FIRE, 'Pause', 1, function (res) {
+		   console.log("Command fire pause executed with result : " + res);
+	       });
+	   });		   
+
+app.intent('FireFWD',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire forward}"]
+	   },
+	   function (req, res) {
+	       res.say('forwarding!');
+	       console.log('FWD');
+	       execCmd(FIRE, 'FastForward', 1, function (res) {
+		   console.log("Command fire FWD executed with result : " + res);
+	       });
+	   });		   
+	   
+app.intent('FireMenu',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire menu}"]
+	   },
+	   function (req, res) {
+	       res.say('Menu!');
+	       console.log('Menu');
+	       execCmd(FIRE, 'Menu', 1, function (res) {
+		   console.log("Command fire Menu executed with result : " + res);
+	       });
+	   });	
+	   
+app.intent('FireBack',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire back}"]
+	   },
+	   function (req, res) {
+	       res.say('Back!');
+	       console.log('Back');
+	       execCmd(FIRE, 'Back', 1, function (res) {
+		   console.log("Command fire back executed with result : " + res);
+	       });
+	   });	
+
+app.intent('FireSearch',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire search}"]
+	   },
+	   function (req, res) {
+	       res.say('Searching!');
+	       console.log('Search');
+	       execCmd(FIRE, 'Search', 1, function (res) {
+		   console.log("Command fire search executed with result : " + res);
+	       });
+	   });	
+	   
+app.intent('FireExit',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire exit}"]
+	   },
+	   function (req, res) {
+	       res.say('Exiting!');
+	       console.log('Exit');
+	       execCmd(FIRE, 'Exit', 1, function (res) {
+		   console.log("Command fire exit executed with result : " + res);
+	       });
+	   });	
+
+app.intent('FireDel',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire delete}"]
+	   },
+	   function (req, res) {
+	       res.say('Deleting!');
+	       console.log('Delete');
+	       execCmd(FIRE, 'Delete', 1, function (res) {
+		   console.log("Command fire Delete executed with result : " + res);
+	       });
+	   });		
+	   
+app.intent('FireHome',
+	   {
+	       "slots" : {},
+	       "utterances" : ["{fire home}"]
+	   },
+	   function (req, res) {
+	       res.say('home!');
+	       console.log('home');
+	       execCmd(FIRE, 'Home', 1, function (res) {
+		   console.log("Command fire home executed with result : " + res);
+	       });
+	   });	
+	   
+	   
 app.intent('Music',
 	   {
 	       "slots" : {},
@@ -550,7 +807,7 @@ app.intent('Music',
 	   function (req, res) {
 	       res.say('Turning on Music Mode!');
 	       console.log('Turning on Music Mode!');
-	       execActivity('Listen to Music', function (res) {
+	       execActivity(actMusic, function (res) {
 		   console.log("Command to Music executed with result : " + res);
 	       });
 	   });
@@ -563,7 +820,7 @@ app.intent('Roku',
 	 function (req, res) {
 	      res.say('Turning on Roku!');
 	      console.log('Turning on Roku Mode!');
-	      execActivity(Roku, function (res) {
+	      execActivity(actRoku, function (res) {
 		 console.log("Command to Roku executed with result : " + res);
 	      });
 	 });
@@ -576,7 +833,7 @@ app.intent('TV',
 	 function (req, res) {
 	     res.say('Turning on TV!');
 	     console.log('Turning on TV Mode!');
-	     execActivity(Telv, function (res) {
+	     execActivity(actTV, function (res) {
 		  console.log("Command to TV executed with result : " + res);
 	     });
 	 });
